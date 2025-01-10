@@ -8,7 +8,7 @@ use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
-Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
+// Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     Route::resource('boards', BoardController::class);
     Route::resource('boards.cards', CardController::class);
     Route::put('boards/{board}/cards/order', [CardController::class, 'updateOrder']);
@@ -25,5 +25,7 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     Route::get('/cards/{card}', [CardController::class, 'show']); // Menampilkan card tertentu
     Route::put('/cards/{card}', [CardController::class, 'update']); // Memperbarui card tertentu
     Route::delete('/cards/{card}', [CardController::class, 'destroy']); // Menghapus card tertentu
-    return $request->user();
-});
+    // return $request->user();
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+// });

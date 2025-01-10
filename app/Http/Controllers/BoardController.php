@@ -9,15 +9,21 @@ class BoardController extends Controller
     public function index()
     {
         $boards = Board::where('user_id', auth()->id())->get();
-        return response()->json($boards);
+        return response()->json(Board::all());
     }
 
     public function store(Request $request)
     {
-        $request->validate(['nama' => 'required|string|max:255']);
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'member' => 'string',
+            'card' => 'string'
+    ]);
 
         $board = Board::create([
             'nama' => $request->nama,
+            'card' => $request->card,
+            'member' => $request->member,
             'user_id' => auth()->id(),
         ]);
 
