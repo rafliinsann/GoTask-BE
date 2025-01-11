@@ -9,6 +9,9 @@ use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
 Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
 
 // Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
+    Route::get('/test', function() {
+        return response()->json(['message' => 'Aman Bosku!']);
+    });
     Route::resource('boards', BoardController::class);
     Route::resource('boards.cards', CardController::class);
     Route::put('boards/{board}/cards/order', [CardController::class, 'updateOrder']);
