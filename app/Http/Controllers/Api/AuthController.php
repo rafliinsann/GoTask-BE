@@ -10,6 +10,9 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
+    public function index(){
+        return response()->json(User::all());
+    }
     public function register(Request $request)
     {
         try{

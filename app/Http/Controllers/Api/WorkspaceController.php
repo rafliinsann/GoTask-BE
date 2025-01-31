@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
 use App\Models\Workspace;
 use Exception;
+use Illuminate\Http\Request;
 
 class WorkspaceController extends Controller
 {
@@ -15,7 +16,7 @@ class WorkspaceController extends Controller
 
     public function store(Request $request)
     {
-        try{        
+        try{
         $request->validate([
                 'username' => 'required',
                 'board' => 'required',
@@ -28,4 +29,5 @@ class WorkspaceController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
 }
