@@ -1,27 +1,33 @@
 <?php
 
-use App\Http\Controllers\Api\ApiBoardController;
+use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\BoardController;
+use App\Http\Controllers\Api\BoardController;
+use App\Http\Controllers\Api\ListController;
 use App\Http\Controllers\Api\CardController;
-use Laravel\Sanctum\Http\Controllers\CsrfCookieController;
+use App\Http\Controllers\WorkspaceController;
 
-Route::get('/sanctum/csrf-cookie', [CsrfCookieController::class, 'show']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-// Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    Route::get('/test', function() {
-        return response()->json(['message' => 'Aman Bosku!']);
-    });
-    Route::apiResource('/boards', ApiBoardController::class);
-    Route::apiResource('/cards', CardController::class);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/workspaces', [WorkspaceController::class, 'index']);
+    Route::post('/workspaces', [WorkspaceController::class, 'store']);
 
-    // Route::resource('boards.cards', CardController::class);
-    // Route::put('boards/{board}/cards/order', [CardController::class, 'updateOrder']);
+    Route::get('/boards', [BoardController::class, 'index']);
+    Route::post('/boards', [BoardController::class, 'store']);
+    Route::get('/boards/{id}', [BoardController::class, 'show']);
+    Route::put('/boards/{id}', [BoardController::class, 'update']);
+    Route::delete('/boards/{id}', [BoardController::class, 'destroy']);
 
-    // Route::get('/boards/{board}/cards', [CardController::class, 'index']); // Menampilkan semua card dalam board tertentu
-    // Route::post('/boards/{board}/cards', [CardController::class, 'store']);
-    // Route::get('/cards/{card}', [CardController::class, 'show']); // Menampilkan card tertentu
-    // Route::put('/cards/{card}', [CardController::class, 'update']); // Memperbarui card tertentu
-    // Route::delete('/cards/{card}', [CardController::class, 'destroy']); // Menghapus card tertentu
+    Route::get('/lists/{board_id}', [ListController::class, 'index']);
+    Route::post('/lists', [ListController::class, 'store']);
+    Route::delete('/lists/{id}', [ListController::class, 'destroy']);
 
+    Route::get('/cards/{list_id}', [CardController::class, 'index']);
+    Route::post('/cards', [CardController::class, 'store']);
+    Route::put('/cards/{id}', [CardController::class, 'update']);
+    Route::delete('/cards/{id}', [CardController::class, 'destroy']);
+});

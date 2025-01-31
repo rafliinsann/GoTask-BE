@@ -14,11 +14,11 @@ return new class extends Migration
         Schema::create('boards', function (Blueprint $table) {
             $table->id();
             $table->string('nama');
-            $table->string('card');
-            $table->string('member');
+            $table->json('list')->nullable();
+            $table->json('member');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
-        });
+            });
     }
 
     /**

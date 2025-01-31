@@ -7,13 +7,15 @@ use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
+    
     /**
      * Define the application's command schedule.
      */
-    protected function schedule(Schedule $schedule): void
-    {
-        // $schedule->command('inspire')->hourly();
-    }
+    protected function schedule(Schedule $schedule)
+{
+    $schedule->command('check:card-deadlines')->dailyAt('08:00');
+}
+
 
     /**
      * Register the commands for the application.
