@@ -1,4 +1,5 @@
-<?
+<?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,10 +9,24 @@ class Card extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['cover', 'title', 'assign', 'label', 'deskripsi'];
+    protected $table = 'cards';
 
-    public function board()
+    protected $fillable = [
+        'list_id',
+        'cover',
+        'title',
+        'assign',
+        'label',
+        'deadline',
+        'deskripsi'];
+
+
+    protected $casts = [
+        'label' => 'array',
+    ];
+    public function list()
     {
-        return $this->belongsTo(Board::class);
+        return $this->belongsTo(Listt::class, 'list_id');
     }
 }
+

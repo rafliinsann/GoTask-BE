@@ -1,49 +1,76 @@
-<?
+<?php
 namespace App\Http\Controllers;
 
-use App\Models\Board;
 use App\Models\Card;
+use App\Models\Listt;
 use Illuminate\Http\Request;
 
 class CardController extends Controller
 {
-    public function index(Board $board)
+    public function index($list_id)
     {
-        $cards = $board->cards;
-        return response()->json($cards);
+        $list = Listt::findOrFail($list_id);
+        $cards = Card::where('list_id', $list_id)->get();
+        return view('card.index', compact('list', 'cards'));
+    }
+
+    public function create($list_id)
+    {
+        return view('card.create', compact('list_id'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'title' => 'required|string|max:255',
-            'board_id' => 'required|exists:boards,id',
+            'title' => 'required',
+            'deskripsi' => 'nullable',
+            'label' => 'nullable|string',
+            'deadline' => 'nullable|date',
+            'list_id' => 'required|exists:list,id'
         ]);
 
-        $card = Card::create($request->all());
+        Card::create($request->all());
 
-        return response()->json(['success' => true, 'card' => $card]);
+        return redirect()->route('board.show', ['id' => Listt::find($request->list_id)->board_id])->with('success', 'Card berhasil ditambahkan!');
     }
 
-    public function update(Request $request, Card $card)
+
+    public function edit($list_id, Card $card)
     {
-        $request->validate(['title' => 'required|string|max:255']);
-        $card->update($request->all());
-
-        return response()->json(['success' => true]);
+        return view('card.edit', compact('list_id', 'card'));
     }
 
-    public function destroy(Card $card)
+    public function update(Request $request, $list_id, Card $card)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'deskripsi' => 'nullable|string',
+            'dates' => 'nullable|date',
+        ]);
+
+        $card->update([
+            'title' => $request->title,
+            'deskripsi' => $request->deskripsi,
+            'dates' => $request->dates,
+        ]);
+
+        return redirect()->route('card.index', $list_id)->with('success', 'Card berhasil diperbarui!');
+    }
+
+    public function destroy($list_id, Card $card)
     {
         $card->delete();
-        return response()->json(['success' => true]);
+        return redirect()->route('card.index', $list_id)->with('success', 'Card berhasil dihapus!');
     }
-    public function updateOrder(Request $request, Board $board)
-    {
-        $request->validate(['order' => 'required|array']);
-        foreach ($request->order as $index => $cardId) {
-            Card::where('id', $cardId)->update(['order' => $index]);
-        }
-        return response()->json(['success' => true]);
+    public function updatePosition(Request $request)
+{
+    $cards = $request->cards; // Data dari AJAX
+
+    foreach ($cards as $position => $id) {
+        Card::where('id', $id)->update(['list_id' => $request->list_id, 'order' => $position]);
     }
+
+    return response()->json(['success' => true]);
+}
+
 }

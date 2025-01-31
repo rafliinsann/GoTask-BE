@@ -1,4 +1,5 @@
-<?
+<?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -8,18 +9,26 @@ class Board extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nama', 'card', 'member', 'user_id'];
+    protected $table = 'boards';
 
-    public function user()
+    protected $fillable = [
+        'nama',
+        'list',
+        'member',
+    ];
+
+    protected $casts = [
+        'list' => 'array',
+        'member' => 'array',
+    ];
+
+    public function workspace()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Workspace::class, 'workspace_id');
     }
-    public function member()
+
+    public function lists()
     {
-        return $this->belongsTo(User::class, 'member_id');
-    }
-    public function cards()
-    {
-        return $this->hasMany(Card::class);
+        return $this->hasMany(Listt::class, 'board_id');
     }
 }

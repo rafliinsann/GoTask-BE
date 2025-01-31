@@ -1,37 +1,33 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\BoardController;
-use App\Http\Controllers\CardController;
+use App\Http\Controllers\Api\BoardController;
+use App\Http\Controllers\Api\ListController;
+use App\Http\Controllers\Api\CardController;
+use App\Http\Controllers\WorkspaceController;
 
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
-/*
-|--------------------------------------------------------------------------
-| API Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register API routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| is assigned the "api" middleware group. Enjoy building your API!
-|
-*/
-Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
-    Route::resource('boards', BoardController::class);
-    Route::resource('boards.cards', CardController::class);
-    Route::put('boards/{board}/cards/order', [CardController::class, 'updateOrder']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/workspaces', [WorkspaceController::class, 'index']);
+    Route::post('/workspaces', [WorkspaceController::class, 'store']);
 
-    Route::get('/boards', [BoardController::class, 'index']); // Menampilkan semua board
-    Route::post('/boards', [BoardController::class, 'store']); // Menambahkan board baru
-    Route::get('/boards/{board}', [BoardController::class, 'show']); // Menampilkan board tertentu
-    Route::put('/boards/{board}', [BoardController::class, 'update']); // Memperbarui board tertentu
-    Route::delete('/boards/{board}', [BoardController::class, 'destroy']); // Menghapus board tertentu
+    Route::get('/boards', [BoardController::class, 'index']);
+    Route::post('/boards', [BoardController::class, 'store']);
+    Route::get('/boards/{id}', [BoardController::class, 'show']);
+    Route::put('/boards/{id}', [BoardController::class, 'update']);
+    Route::delete('/boards/{id}', [BoardController::class, 'destroy']);
 
-    // Rute untuk Card
-    Route::get('/boards/{board}/cards', [CardController::class, 'index']); // Menampilkan semua card dalam board tertentu
-    Route::post('/boards/{board}/cards', [CardController::class, 'store']); // Menambahkan card baru ke board tertentu
-    Route::get('/cards/{card}', [CardController::class, 'show']); // Menampilkan card tertentu
-    Route::put('/cards/{card}', [CardController::class, 'update']); // Memperbarui card tertentu
-    Route::delete('/cards/{card}', [CardController::class, 'destroy']); // Menghapus card tertentu
-    return $request->user();
+    Route::get('/lists/{board_id}', [ListController::class, 'index']);
+    Route::post('/lists', [ListController::class, 'store']);
+    Route::delete('/lists/{id}', [ListController::class, 'destroy']);
+
+    Route::get('/cards/{list_id}', [CardController::class, 'index']);
+    Route::post('/cards', [CardController::class, 'store']);
+    Route::put('/cards/{id}', [CardController::class, 'update']);
+    Route::delete('/cards/{id}', [CardController::class, 'destroy']);
 });

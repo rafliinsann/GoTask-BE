@@ -1,51 +1,71 @@
-<?
+<?php
 namespace App\Http\Controllers;
 
 use App\Models\Board;
+use App\Models\Workspace;
 use Illuminate\Http\Request;
 
 class BoardController extends Controller
 {
-    public function index()
+    // Menampilkan daftar board dalam workspace tertentu
+    public function index($workspace_id)
     {
-        $boards = Board::where('user_id', auth()->id())->get();
-        return response()->json($boards);
+        $workspace = Workspace::findOrFail($workspace_id);
+        $boards = Board::where('workspace_id', $workspace_id)->get();
+        return view('board.index', compact('workspace', 'boards'));
     }
 
-    public function store(Request $request)
+    // Menampilkan form tambah board
+    public function create($workspace_id)
     {
-        $request->validate(['nama' => 'required|string|max:255']);
+        return view('board.create', compact('workspace_id'));
+    }
 
-        $board = Board::create([
-            'nama' => $request->nama,
-            'user_id' => auth()->id(),
+    // Menyimpan board baru
+    public function store(Request $request, $workspace_id)
+    {
+        $request->validate([
+            'nama' => 'required|string|max:255',
         ]);
 
-        return response()->json(['success' => true, 'board' => $board]);
+        Board::create([
+            'workspace_id' => $workspace_id,
+            'nama' => $request->nama,
+        ]);
+
+        return redirect()->route('board.index', $workspace_id)->with('success', 'Board berhasil ditambahkan!');
     }
 
-    public function edit(Board $board)
+    // Menampilkan detail board
+    public function show($workspace_id, Board $board)
     {
-        return view('boards.edit', compact('board'));
+        return view('board.show', compact('workspace_id', 'board'));
     }
 
-    public function update(Request $request, Board $board)
+    // Menampilkan form edit board
+    public function edit($workspace_id, Board $board)
     {
-        $request->validate(['nama' => 'required|string|max:255']);
-        $board->update(['nama' => $request->nama]);
-        return redirect()->route('boards.index')->with('success', 'Board berhasil diperbarui!');
+        return view('board.edit', compact('workspace_id', 'board'));
     }
 
-    public function destroy(Board $board)
+    // Menyimpan perubahan board
+    public function update(Request $request, $workspace_id, Board $board)
+    {
+        $request->validate([
+            'nama' => 'required|string|max:255',
+        ]);
+
+        $board->update([
+            'nama' => $request->nama,
+        ]);
+
+        return redirect()->route('board.index', $workspace_id)->with('success', 'Board berhasil diperbarui!');
+    }
+
+    // Menghapus board
+    public function destroy($workspace_id, Board $board)
     {
         $board->delete();
-        return response()->json(['success' => true]);
-    }
-    public function inviteMember(Request $request, Board $board)
-    {
-        $request->validate(['member_id' => 'required|exists:users,id']);
-        $board->member_id = $request->member_id;
-        $board->save();
-        return redirect()->route('boards.index')->with('success', 'Anggota berhasil diundang!');
+        return redirect()->route('board.index', $workspace_id)->with('success', 'Board berhasil dihapus!');
     }
 }
