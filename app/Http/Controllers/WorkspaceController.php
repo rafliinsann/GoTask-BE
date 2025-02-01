@@ -6,10 +6,17 @@ use Illuminate\Http\Request;
 
 class WorkspaceController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $workspaces = Workspace::where('username', auth()->user()->username)->get();
-        return view('workspace.index', compact('workspaces'));
+        $user = $request->user();
+
+        if (!$user) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        $username = $user->username;
+
+        return response()->json(['username' => $username]);
     }
 
     public function create()

@@ -9,7 +9,7 @@ class BoardController extends Controller
 {
     // Menampilkan daftar board dalam workspace tertentu
     public function index($workspace_id)
-    {
+    {   
         $workspace = Workspace::findOrFail($workspace_id);
         $boards = Board::where('workspace_id', $workspace_id)->get();
         return view('board.index', compact('workspace', 'boards'));
