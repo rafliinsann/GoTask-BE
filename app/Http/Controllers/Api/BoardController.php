@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Board;
 use App\Models\User;
+use App\Models\Workspace;
 use Illuminate\Http\Request;
 
 class BoardController extends Controller
 {
+    public function index()
+    {
+        return response()->json(Workspace::all());
+    }
     public function getUserBoards(Request $request, $userId)
     {
         $username = $request->query('username');
