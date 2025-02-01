@@ -7,6 +7,7 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 
 class AuthController extends Controller
 {
@@ -51,6 +52,7 @@ class AuthController extends Controller
             'password' => 'required'
         ]);
 
+
         $user = User::where('username', $request->username)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
@@ -58,12 +60,16 @@ class AuthController extends Controller
         }
 
         $token = $user->createToken('auth_token')->plainTextToken;
+        $user->makeHidden(['password']);
 
-        return response()->json(['token' => $token, 'users' => $user]);
+        return response()->json(['token' => $token, 'user' => $user]);
     }catch (Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500);
     }
+
+    
     }
+
 
     public function logout(Request $request)
     {
