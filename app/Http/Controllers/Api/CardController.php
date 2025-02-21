@@ -12,6 +12,10 @@ class CardController extends Controller
         return response()->json(Card::where('list_id', $list_id)->get());
     }
 
+    public function show()
+    {
+        return response()->json(Card::all());
+    }
     public function store(Request $request)
     {
         $request->validate(['list_id' => 'required', 'title' => 'required']);
