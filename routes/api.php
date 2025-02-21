@@ -17,7 +17,6 @@ Route::middleware([])->group(function () {
 
 
 
-
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
@@ -38,7 +37,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/lists/{id}', [ListController::class, 'destroy']);
 
     Route::get('/cards/{list_id}', [CardController::class, 'index']);
-    Route::post('/cards', [CardController::class, 'store']);
+    Route::get('/cards', [CardController::class, 'show']);
+    // Route::post('/cards', [CardController::class, 'store']);
     Route::put('/cards/{id}', [CardController::class, 'update']);
     Route::delete('/cards/{id}', [CardController::class, 'destroy']);
 });
