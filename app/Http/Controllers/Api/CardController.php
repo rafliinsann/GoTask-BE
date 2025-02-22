@@ -15,6 +15,7 @@ class CardController extends Controller
         return view('card.index', compact('list', 'cards'));
     }
 
+<<<<<<< HEAD
     public function create($list_id)
     {
         return view('card.create', compact('list_id'));
@@ -24,6 +25,12 @@ class CardController extends Controller
 		return response()->json(Card::all());
 	}
 
+=======
+    public function show()
+    {
+        return response()->json(Card::all());
+    }
+>>>>>>> temp-fix
     public function store(Request $request)
     {
         $request->validate([
