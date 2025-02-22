@@ -38,7 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/lists/{id}', [ListController::class, 'destroy']);
 
     Route::get('/cards/{list_id}', [CardController::class, 'index']);
-    Route::post('/cards', [CardController::class, 'store']);
+    Route::get('/cards', [CardController::class, 'show']);
     Route::put('/cards/{id}', [CardController::class, 'update']);
     Route::delete('/cards/{id}', [CardController::class, 'destroy']);
 });
