@@ -13,9 +13,9 @@ class CardController extends Controller
     }
 
     public function show()
-    {
-        return response()->json(Card::all());
-    }
+{
+    return response()->json(Card::all());
+}
     public function store(Request $request)
     {
         $request->validate(['list_id' => 'required', 'title' => 'required']);
