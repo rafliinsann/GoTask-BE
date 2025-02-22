@@ -38,10 +38,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/cards/{list_id}', [CardController::class, 'index']);
     Route::get('/cards', [CardController::class, 'show']);
-<<<<<<< HEAD
-=======
     // Route::post('/cards', [CardController::class, 'store']);
->>>>>>> temp-fix
     Route::put('/cards/{id}', [CardController::class, 'update']);
     Route::delete('/cards/{id}', [CardController::class, 'destroy']);
 });
