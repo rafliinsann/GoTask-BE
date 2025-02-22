@@ -15,14 +15,11 @@ class CardController extends Controller
         return view('card.index', compact('list', 'cards'));
     }
 
-    public function create($list_id)
-    {
-        return view('card.create', compact('list_id'));
-    }
 
-	public function show(){
-		return response()->json(Card::all());
-	}
+    public function show()
+{
+    return response()->json(Card::all());
+}
 
     public function store(Request $request)
     {
