@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('assign')->nullable();
             $table->string('label')->nullable();
             $table->string('deskripsi')->nullable();
-            $table->timestamp('dates');
+            $table->timestamp('dates')->nullable();
             $table->foreignId('board_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

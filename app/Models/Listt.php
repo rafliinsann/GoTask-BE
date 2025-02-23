@@ -12,6 +12,7 @@ class Listt extends Model
     protected $table = 'list';
 
     protected $fillable = [
+	'board_id',
         'card',
     ];
 

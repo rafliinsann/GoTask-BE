@@ -28,5 +28,9 @@ class Card extends Model
     {
         return $this->belongsTo(Listt::class, 'list_id');
     }
+    public function board()
+{
+    return $this->belongsTo(Board::class, 'board_id');
+}
 }
 

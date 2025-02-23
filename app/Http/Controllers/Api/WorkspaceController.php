@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Workspace;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class WorkspaceController extends Controller
 {
@@ -16,18 +17,26 @@ class WorkspaceController extends Controller
 
     public function store(Request $request)
     {
-        try{
-        $request->validate([
-                'username' => 'required',
-                'board' => 'required',
-                'member' => 'nullable'
+        try {
+            // Validasi input
+            $request->validate([
+                'board' => 'required|string',
             ]);
 
-            $workspace = Workspace::create($request->all());
-            return response()->json($workspace);
-        }catch (Exception $e) {
+            // Ambil user yang login
+            $user = Auth::user();
+
+            // Buat workspace baru
+            $workspace = Workspace::create([
+                'username' => $user->username, // Menggunakan nama user yang login
+                'board' => $request->board,
+                'member' => json_encode([$user->id]) // Menambahkan user sebagai member default
+            ]);
+
+            return response()->json($workspace, 201);
+        } catch (Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
 }
+

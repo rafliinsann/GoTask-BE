@@ -8,21 +8,49 @@ use Illuminate\Http\Request;
 
 class ListController extends Controller
 {
+    // Mengambil semua list berdasarkan board_id
     public function index($board_id)
     {
-        return response()->json(Listt::where('board_id', $board_id)->get());
+        $lists = Listt::where('board_id', $board_id)->get();
+
+        if ($lists->isEmpty()) {
+            return response()->json(['message' => 'Tidak ada list ditemukan untuk board ini.'], 404);
+        }
+
+        return response()->json($lists);
     }
 
-    public function store(Request $request)
-    {
-        $request->validate(['board_id' => 'required', 'card' => 'required']);
-        $list = Listt::create($request->all());
-        return response()->json($list, 201);
-    }
+    // Menyimpan list baru
+    public function store(Request $request, $board_id)
+{
+    $request->validate([
+        'card' => 'required|array',
+    ]);
 
+    $list = Listt::create([
+        'board_id' => $board_id,  // Isi board_id langsung dari parameter
+        'card' => $request->card,
+    ]);
+
+    return response()->json([
+        'status' => 'success',
+        'message' => 'List created successfully',
+        'data' => $list,
+    ], 201);
+}
+
+
+    // Menghapus list berdasarkan ID
     public function destroy($id)
     {
-        Listt::destroy($id);
-        return response()->json(['message' => 'List deleted']);
+        $list = Listt::find($id);
+
+        if (!$list) {
+            return response()->json(['message' => 'List tidak ditemukan.'], 404);
+        }
+
+        $list->delete();
+        return response()->json(['message' => 'List berhasil dihapus.']);
     }
 }
+
