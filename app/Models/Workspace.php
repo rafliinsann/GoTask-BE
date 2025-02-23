@@ -13,7 +13,7 @@ class Workspace extends Model
 
     protected $fillable = [
         'username',
-        'board',
+        'workspace',
         'member',
     ];
 

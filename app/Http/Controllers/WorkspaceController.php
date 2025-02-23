@@ -27,12 +27,12 @@ class WorkspaceController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'board' => 'required|string|max:255',
+            'workspace' => 'required|string|max:255',
         ]);
 
         Workspace::create([
             'username' => auth()->user()->username,
-            'board' => $request->board,
+            'workspace' => $request->workspace,
             'member' => json_encode([]), // Default kosong
         ]);
 
@@ -52,11 +52,11 @@ class WorkspaceController extends Controller
     public function update(Request $request, Workspace $workspace)
     {
         $request->validate([
-            'board' => 'required|string|max:255',
+            'workspace' => 'required|string|max:255',
         ]);
 
         $workspace->update([
-            'board' => $request->board,
+            'workspace' => $request->board,
         ]);
 
         return redirect()->route('workspace.index')->with('success', 'Workspace berhasil diperbarui!');

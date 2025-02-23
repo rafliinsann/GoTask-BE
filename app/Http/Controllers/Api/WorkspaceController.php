@@ -4,42 +4,66 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Workspace;
-use Exception;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class WorkspaceController extends Controller
 {
+    // Get all workspaces
     public function index()
     {
-        return response()->json(Workspace::all());
+        return response()->json(Workspace::all(), 200);
     }
 
+    // Create a new workspace
     public function store(Request $request)
     {
-        try {
-            // Validasi input
-            $request->validate([
-                'board' => 'required|string',
-            ]);
+        $request->validate([
+            'workspace' => 'required|string|max:255',
+        ]);
 
-            // Ambil user yang login
-            $user = Auth::user();
+	$user = Auth::user();
 
-            // Buat workspace baru
-            $workspace = Workspace::create([
-                'username' => $user->username, // Menggunakan nama user yang login
-                'board' => $request->board,
-                'member' => json_encode([$user->id]) // Menambahkan user sebagai member default
-            ]);
+        $workspace = Workspace::create([
+            'username' => $user->username, // Menggunakan nama user yang login
+            'workspace' => $request->workspace,
+            'user_id' => auth()->id(), // Mengatur user_id sesuai yang login
+	    'member' => json_encode([$user->id])
+        ]);
 
-            return response()->json($workspace, 201);
-        } catch (Exception $e) {
-            return response()->json(['error' => $e->getMessage()], 500);
-        }
+        return response()->json([
+            'message' => 'Workspace berhasil dibuat!',
+            'workspace' => $workspace
+        ], 201);
     }
 
-   public function inviteMember(Request $request, $workspace_id)
+    // Show a specific workspace
+    public function show($id)
+    {
+        $workspace = Workspace::findOrFail($id);
+        return response()->json($workspace, 200);
+    }
+
+    // Update workspace
+    public function update(Request $request, $id)
+    {
+        $workspace = Workspace::findOrFail($id);
+        $workspace->update($request->all());
+
+        return response()->json([
+            'message' => 'Workspace berhasil diperbarui!',
+            'workspace' => $workspace
+        ], 200);
+    }
+
+    // Delete workspace
+    public function destroy($id)
+    {
+        Workspace::destroy($id);
+        return response()->json(['message' => 'Workspace berhasil dihapus!'], 200);
+    }
+
+public function inviteMember(Request $request, $workspace_id)
 {
     $workspace = Workspace::findOrFail($workspace_id);
 
