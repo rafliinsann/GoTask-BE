@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -17,7 +16,9 @@ class Card extends Model
         'assign',
         'label',
         'deadline',
-        'deskripsi'];
+        'deskripsi',
+	'board_id'
+];
 
 
     protected $casts = [

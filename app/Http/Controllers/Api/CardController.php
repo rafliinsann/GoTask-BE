@@ -30,18 +30,17 @@ class CardController extends Controller
     }
 
     // Create a new card
-    public function store(Request $request)
+    public function store(Request $request, $board_id)
     {
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'label' => 'nullable|string',
             'deadline' => 'nullable|date',
-            'board_id' => 'required|exists:boards,id',
         ]);
 
         $user = Auth::user();
-        $board = Board::findOrFail($request->board_id);
+        $board = Board::findOrFail($board_id);
 
         // Cek apakah user adalah member, owner, atau superadmin
         $members = json_decode($board->member, true) ?? [];
@@ -54,7 +53,7 @@ class CardController extends Controller
             'description' => $request->description,
             'label' => $request->label,
             'deadline' => $request->deadline,
-            'board_id' => $request->board_id,
+            'board_id' => $board_id,
         ]);
 
         return response()->json([
