@@ -9,10 +9,15 @@ use Illuminate\Http\Request;
 
 class WorkspaceController extends Controller
 {
-    // Get all workspaces
+    // Get all workspaces (Owner or Member)
     public function index()
     {
-        return response()->json(Workspace::all(), 200);
+        $user = Auth::user();
+        $workspaces = Workspace::where('owner_id', $user->id)
+            ->orWhereJsonContains('members', $user->id)
+            ->get();
+
+        return response()->json($workspaces, 200);
     }
 
     // Create a new workspace
@@ -22,13 +27,13 @@ class WorkspaceController extends Controller
             'workspace' => 'required|string|max:255',
         ]);
 
-	$user = Auth::user();
+        $user = Auth::user();
 
         $workspace = Workspace::create([
             'username' => $user->username, // Menggunakan nama user yang login
             'workspace' => $request->workspace,
-            'user_id' => auth()->id(), // Mengatur user_id sesuai yang login
-	    'member' => json_encode([$user->id])
+            'owner_id' => $user->id, // Mengatur owner_id sesuai user yang login
+            'member' => json_encode([$user->id]) // Owner langsung menjadi member
         ]);
 
         return response()->json([
@@ -41,6 +46,11 @@ class WorkspaceController extends Controller
     public function show($id)
     {
         $workspace = Workspace::findOrFail($id);
+
+        if (!$this->hasAccess($workspace)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         return response()->json($workspace, 200);
     }
 
@@ -48,6 +58,11 @@ class WorkspaceController extends Controller
     public function update(Request $request, $id)
     {
         $workspace = Workspace::findOrFail($id);
+
+        if (!$this->isOwner($workspace)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $workspace->update($request->all());
 
         return response()->json([
@@ -59,11 +74,19 @@ class WorkspaceController extends Controller
     // Delete workspace
     public function destroy($id)
     {
-        Workspace::destroy($id);
+        $workspace = Workspace::findOrFail($id);
+
+        if (!$this->isOwner($workspace)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        $workspace->delete();
+
         return response()->json(['message' => 'Workspace berhasil dihapus!'], 200);
     }
 
-public function inviteMember(Request $request, $workspace_id)
+    // Invite member to workspace
+    public function inviteMember(Request $request, $workspace_id)
 {
     $workspace = Workspace::findOrFail($workspace_id);
 
@@ -72,18 +95,37 @@ public function inviteMember(Request $request, $workspace_id)
     }
 
     $request->validate([
-        'user_id' => 'required|exists:users,id'
+        'username' => 'required|exists:users,username'
     ]);
 
-    $members = $workspace->members ?? [];
-    if (!in_array($request->user_id, $members)) {
-        $members[] = $request->user_id;
-        $workspace->members = $members;
+    // Cari user berdasarkan username
+    $userToInvite = \App\Models\User::where('username', $request->username)->firstOrFail();
+
+    $members = json_decode($workspace->member, true) ?? [];
+
+    // Tambahkan ID user ke member list jika belum ada
+    if (!in_array($userToInvite->id, $members)) {
+        $members[] = $userToInvite->id;
+        $workspace->member = json_encode($members);
         $workspace->save();
     }
 
     return response()->json(['message' => 'Member berhasil diundang!']);
 }
 
+
+    // Helper function: Check if user is owner
+    private function isOwner($workspace)
+    {
+        return Auth::id() === $workspace->owner_id;
+    }
+
+    // Helper function: Check if user has access (owner or member)
+    private function hasAccess($workspace)
+    {
+        $userId = Auth::id();
+        $members = json_decode($workspace->members, true) ?? [];
+        return $workspace->owner_id === $userId || in_array($userId, $members);
+    }
 }
 

@@ -15,6 +15,7 @@ class Workspace extends Model
         'username',
         'workspace',
         'member',
+	'owner_id'
     ];
 
     protected $casts = [

@@ -43,7 +43,7 @@ class CardController extends Controller
         $user = Auth::user();
         $board = Board::findOrFail($request->board_id);
 
-        // Hanya member, owner, atau superadmin yang bisa membuat card
+        // Cek apakah user adalah member, owner, atau superadmin
         $members = json_decode($board->member, true) ?? [];
         if (!in_array($user->id, $members) && $board->user_id !== $user->id && !$user->isSuperAdmin()) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -79,12 +79,16 @@ class CardController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'label' => 'nullable|string',
             'deadline' => 'nullable|date',
         ]);
 
-        $card->update([
+ 
+
+ $card->update([
             'title' => $request->title,
             'description' => $request->description,
+            'label' => $request->label,
             'deadline' => $request->deadline,
         ]);
 
@@ -110,4 +114,3 @@ class CardController extends Controller
         return response()->json(['message' => 'Card berhasil dihapus!'], 200);
     }
 }
-

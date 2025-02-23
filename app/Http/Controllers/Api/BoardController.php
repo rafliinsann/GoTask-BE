@@ -12,6 +12,14 @@ class BoardController extends Controller
     // Get all boards for a workspace
     public function index($workspace_id)
     {
+        $user = Auth::user();
+        $workspace = Workspace::findOrFail($workspace_id);
+
+        // Cek apakah user adalah member atau owner
+        if (!$this->hasAccessToWorkspace($workspace, $user->id)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
         $boards = Board::where('workspace_id', $workspace_id)->get();
         return response()->json($boards);
     }
@@ -27,7 +35,7 @@ class BoardController extends Controller
         $user = Auth::user();
         $workspace = Workspace::findOrFail($request->workspace_id);
 
-        // Cek apakah user adalah owner workspace
+        // Cek apakah user adalah owner atau superadmin
         if ($workspace->owner_id !== $user->id && !$user->isSuperAdmin()) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
@@ -47,39 +55,40 @@ class BoardController extends Controller
 
     // Add a new member to the board
     public function addMember(Request $request, $id)
-    {
-        $request->validate([
-            'user_id' => 'required|exists:users,id',
-        ]);
+{
+    $request->validate([
+        'username' => 'required|exists:users,username',
+    ]);
 
-        $board = Board::findOrFail($id);
-        $workspace = $board->workspace;
-        $user = Auth::user();
+    $board = Board::findOrFail($id);
+    $workspace = $board->workspace;
+    $user = Auth::user();
 
-        // Cek apakah user yang login adalah owner workspace atau superadmin
-        if ($workspace->owner_id !== $user->id && !$user->isSuperAdmin()) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        $members = json_decode($board->member, true) ?? [];
-
-        if (!in_array($request->user_id, $members)) {
-            $members[] = $request->user_id;
-            $board->member = json_encode($members);
-            $board->save();
-        }
-
-        return response()->json([
-            'message' => 'Member berhasil ditambahkan!',
-            'board' => $board
-        ], 200);
+    // Cek apakah user yang login adalah owner workspace atau superadmin
+    if ($workspace->owner_id !== $user->id && !$user->isSuperAdmin()) {
+        return response()->json(['error' => 'Unauthorized'], 403);
     }
+
+    $userToInvite = \App\Models\User::where('username', $request->username)->firstOrFail();
+    $members = json_decode($board->member, true) ?? [];
+
+    if (!in_array($userToInvite->id, $members)) {
+        $members[] = $userToInvite->id;
+        $board->member = json_encode($members);
+        $board->save();
+    }
+
+    return response()->json([
+        'message' => 'Member berhasil ditambahkan!',
+        'board' => $board
+    ], 200);
+}
 
     // Delete a board
     public function destroy($id)
     {
         $board = Board::findOrFail($id);
-        $workspace = $board->workspace;
+        $workspace = Workspace::findOrFail($board->workspace_id);
         $user = Auth::user();
 
         // Hanya owner workspace atau superadmin yang bisa menghapus
@@ -89,6 +98,13 @@ class BoardController extends Controller
 
         $board->delete();
         return response()->json(['message' => 'Board berhasil dihapus!']);
+    }
+
+    // Helper function: Cek akses ke workspace
+    private function hasAccessToWorkspace($workspace, $userId)
+    {
+        $members = json_decode($workspace->members, true) ?? [];
+        return $workspace->owner_id === $userId || in_array($userId, $members);
     }
 }
 
