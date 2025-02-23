@@ -12,7 +12,6 @@ class Card extends Model
     protected $table = 'cards';
 
     protected $fillable = [
-        'list_id',
         'cover',
         'title',
         'assign',
@@ -24,13 +23,10 @@ class Card extends Model
     protected $casts = [
         'label' => 'array',
     ];
-    public function list()
-    {
-        return $this->belongsTo(Listt::class, 'list_id');
-    }
+
     public function board()
-{
-    return $this->belongsTo(Board::class, 'board_id');
-}
+    {
+    	return $this->belongsTo(Board::class, 'board_id');
+    }
 }
 

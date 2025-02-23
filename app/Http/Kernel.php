@@ -45,6 +45,15 @@ class Kernel extends HttpKernel
     ],
     ];
 
+protected $routeMiddleware = [
+    // Middleware bawaan Laravel
+    'auth' => \App\Http\Middleware\Authenticate::class,
+
+    // Middleware custom role check
+    'role' => \App\Http\Middleware\CheckRole::class,
+];
+
+
     /**
      * The application's middleware aliases.
      *

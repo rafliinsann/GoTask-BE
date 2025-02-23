@@ -21,6 +21,18 @@ class Workspace extends Model
         'member' => 'array',
     ];
 
+    public function owner()
+{
+    return $this->belongsTo(User::class, 'owner_id');
+}
+
+public function members()
+{
+    return $this->belongsToMany(User::class, 'users', 'id', 'id')
+                ->whereIn('id', $this->members ?? []);
+}
+
+
     public function boards()
     {
         return $this->hasMany(Board::class, 'workspace_id');

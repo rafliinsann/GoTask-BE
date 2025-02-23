@@ -13,14 +13,12 @@ class Board extends Model
 
     protected $fillable = [
         'nama',
-        'list',
         'member',
         'user_id', // Tambahkan ini untuk mass assignment
         'workspace_id',
     ];
 
     protected $casts = [
-        'list' => 'array',
         'member' => 'array',
     ];
 
@@ -31,9 +29,9 @@ class Board extends Model
     }
 
     // Relasi ke List
-    public function lists()
+    public function cards()
     {
-        return $this->hasMany(Listt::class, 'board_id');
+        return $this->hasMany(Card::class, 'board_id');
     }
 
     // Relasi ke User (pemilik board)

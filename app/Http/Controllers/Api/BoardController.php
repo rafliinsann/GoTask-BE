@@ -5,106 +5,67 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Board;
 use App\Models\User;
-use App\Models\Workspace;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class BoardController extends Controller
 {
-    // Mendapatkan semua board
-    public function index()
+    // Get all boards for a workspace
+    public function index($workspace_id)
     {
-        return response()->json(Board::all(), 200);
+        return response()->json(Board::where('workspace_id', $workspace_id)->get());
     }
 
-
-    // Mendapatkan board milik user tertentu
-    public function getUserBoards()
-{
-    $userId = auth()->id();
-
-    $boards = Board::where('user_id', $userId)->get();
-
-    if ($boards->isEmpty()) {
-        return response()->json(['message' => 'Tidak ada boards ditemukan.'], 404);
-    }
-
-    return response()->json($boards, 200);
-}
-
-
-    // Menyimpan board baru
+    // Create a new board
     public function store(Request $request)
-{
-    $request->validate([
-        'nama' => 'required|string|max:255',
-    ]);
-
-    // Ambil ID user yang sedang login
-    $user = auth()->user();
-    if (!$user) {
-        return response()->json(['error' => 'User tidak terautentikasi'], 401);
-    }
-
-    $workspace = Workspace::where('username', $user->username)->first();
-
-    if (!$workspace) {
-        return response()->json(['message' => 'Workspace tidak ditemukan.'], 404);
-    }
-
-    // Buat board dengan user_id yang login
-    $board = Board::create([
-        'nama' => $request->nama,
-        'user_id' => $user->id,
-	'workspace_id' => $workspace->id,
-	'member' => json_encode([$user->id]),
-    ]);
-
-    return response()->json($board, 201);
-}
-
-
-    // Menampilkan board berdasarkan ID
-    public function show($id)
     {
-        $board = Board::find($id);
-
-        if (!$board) {
-            return response()->json(['message' => 'Board tidak ditemukan.'], 404);
-        }
-
-        return response()->json($board, 200);
-    }
-
-    // Memperbarui board
-    public function update(Request $request, $id)
-    {
-        $board = Board::find($id);
-
-        if (!$board) {
-            return response()->json(['message' => 'Board tidak ditemukan.'], 404);
-        }
-
         $request->validate([
-            'nama' => 'sometimes|required|string|max:255',
+            'nama' => 'required|string|max:255',
+            'workspace_id' => 'required|exists:workspaces,id',
         ]);
 
-        $board->update($request->all());
+        $userId = Auth::id();
 
-        return response()->json($board, 200);
+        $board = Board::create([
+            'nama' => $request->nama,
+            'workspace_id' => $request->workspace_id,
+            'user_id' => $userId,
+            'member' => json_encode([$userId]), // Default member adalah user yang login
+        ]);
+
+        return response()->json([
+            'message' => 'Board berhasil dibuat!',
+            'board' => $board
+        ], 201);
     }
 
-    // Menghapus board
-    public function destroy($id)
+    // Add a new member to the board
+    public function addMember(Request $request, $id)
     {
-        $board = Board::find($id);
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+        ]);
 
-        if (!$board) {
-            return response()->json(['message' => 'Board tidak ditemukan.'], 404);
+        $board = Board::findOrFail($id);
+        $members = json_decode($board->member, true);
+
+        if (!in_array($request->user_id, $members)) {
+            $members[] = $request->user_id;
+            $board->member = json_encode($members);
+            $board->save();
         }
 
-        $board->delete();
+        return response()->json([
+            'message' => 'Member berhasil ditambahkan!',
+            'board' => $board
+        ], 200);
+    }
 
-        return response()->json(['message' => 'Board berhasil dihapus.'], 200);
+    // Delete a board
+    public function destroy($id)
+    {
+        Board::destroy($id);
+        return response()->json(['message' => 'Board berhasil dihapus!']);
     }
 }
 

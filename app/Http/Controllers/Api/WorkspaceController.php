@@ -38,5 +38,28 @@ class WorkspaceController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+   public function inviteMember(Request $request, $workspace_id)
+{
+    $workspace = Workspace::findOrFail($workspace_id);
+
+    if (auth()->id() !== $workspace->owner_id) {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    $request->validate([
+        'user_id' => 'required|exists:users,id'
+    ]);
+
+    $members = $workspace->members ?? [];
+    if (!in_array($request->user_id, $members)) {
+        $members[] = $request->user_id;
+        $workspace->members = $members;
+        $workspace->save();
+    }
+
+    return response()->json(['message' => 'Member berhasil diundang!']);
+}
+
 }
 

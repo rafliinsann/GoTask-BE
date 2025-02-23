@@ -51,4 +51,20 @@ class User extends Authenticatable implements MustVerifyEmail
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+
+    public function ownedWorkspaces()
+{
+    return $this->hasMany(Workspace::class, 'owner_id');
+}
+
+public function isSuperAdmin()
+{
+    return $this->role === 'superadmin';
+}
+
+public function isWorkspaceMember(Workspace $workspace)
+{
+    return in_array($this->id, $workspace->members ?? []);
+}
+
 }
