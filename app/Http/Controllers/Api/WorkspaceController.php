@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\WorkspaceUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Workspace;
 use Illuminate\Support\Facades\Auth;
@@ -38,6 +39,7 @@ class WorkspaceController extends Controller
             'member' => json_encode([$user->id]) // Owner langsung menjadi member
         ]);
 
+        broadcast(new WorkspaceUpdated($workspace))->toOthers();
         return response()->json([
             'message' => 'Workspace berhasil dibuat!',
             'workspace' => $workspace
@@ -67,6 +69,7 @@ class WorkspaceController extends Controller
 
         $workspace->update($request->all());
 
+        broadcast(new WorkspaceUpdated($workspace))->toOthers();
         return response()->json([
             'message' => 'Workspace berhasil diperbarui!',
             'workspace' => $workspace
@@ -84,6 +87,7 @@ class WorkspaceController extends Controller
 
         $workspace->delete();
 
+        broadcast(new WorkspaceUpdated($workspace))->toOthers();
         return response()->json(['message' => 'Workspace berhasil dihapus!'], 200);
     }
 
@@ -112,6 +116,7 @@ class WorkspaceController extends Controller
         $workspace->save();
     }
 
+    broadcast(new WorkspaceUpdated($workspace))->toOthers();
     return response()->json(['message' => 'Member berhasil diundang!']);
 }
 

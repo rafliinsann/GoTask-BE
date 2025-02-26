@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use App\Events\BoardUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Board;
 use App\Models\Workspace;
@@ -36,6 +37,7 @@ class BoardController extends Controller
         $user = Auth::user();
         $workspace = Workspace::findOrFail($request->workspace_id);
 
+
         // Cek apakah user adalah owner atau superadmin
         if ($workspace->owner_id !== $user->id && !$user->isSuperAdmin()) {
             return response()->json(['error' => 'Unauthorized'], 403);
@@ -47,6 +49,8 @@ class BoardController extends Controller
             'user_id' => $user->id,
             'member' => json_encode([$user->id]), // Default member adalah user yang login
         ]);
+
+        broadcast(new BoardUpdated($board))->toOthers();
 
         return response()->json([
             'message' => 'Board berhasil dibuat!',
@@ -84,6 +88,7 @@ class BoardController extends Controller
     }
 
     $board->save();
+    broadcast(new BoardUpdated($board))->toOthers();
 
     return response()->json([
         'message' => 'Board berhasil diperbarui!',
@@ -98,7 +103,7 @@ class BoardController extends Controller
         'username' => 'required|exists:users,username',
     ]);
 
-    
+
     $board = Board::findOrFail($id);
     $workspace = $board->workspace;
     /** @var \App\Models\User $user */
@@ -117,6 +122,8 @@ class BoardController extends Controller
         $board->member = json_encode($members);
         $board->save();
     }
+
+    broadcast(new BoardUpdated($board))->toOthers();
 
     return response()->json([
         'message' => 'Member berhasil ditambahkan!',
@@ -138,6 +145,7 @@ class BoardController extends Controller
         }
 
         $board->delete();
+        broadcast(new BoardUpdated($board))->toOthers();
         return response()->json(['message' => 'Board berhasil dihapus!']);
     }
 

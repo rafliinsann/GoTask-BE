@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Api;
 
+use App\Events\CardUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Board;
 use App\Models\Card;
@@ -60,6 +61,8 @@ class CardController extends Controller
             'board_id' => $board_id,
         ]);
 
+        broadcast(new CardUpdated($card))->toOthers();
+
         return response()->json([
             'message' => 'Card berhasil dibuat!',
             'card' => $card
@@ -88,9 +91,9 @@ class CardController extends Controller
             'colour' => 'nullable|string'
         ]);
 
- 
 
- $card->update([
+
+        $card->update([
             'title' => $request->title,
             'description' => $request->description,
             'label' => $request->label,
@@ -98,6 +101,7 @@ class CardController extends Controller
             'colour' => $request->colour,
         ]);
 
+        broadcast(new CardUpdated($card))->toOthers();
         return response()->json([
             'message' => 'Card berhasil diperbarui!',
             'card' => $card
@@ -118,6 +122,7 @@ class CardController extends Controller
         }
 
         $card->delete();
+        broadcast(new CardUpdated($card))->toOthers();
         return response()->json(['message' => 'Card berhasil dihapus!'], 200);
     }
 }
