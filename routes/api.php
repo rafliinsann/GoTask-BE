@@ -17,6 +17,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // 🔹 Board Routes
     Route::get('/boards/workspaces/{workspace_id}', [BoardController::class, 'index']);
     Route::post('/boards', [BoardController::class, 'store']);
+    Route::put('/boards/{id}', [BoardController::class, 'update']);
     Route::post('/boards/{id}/add-member', [BoardController::class, 'addMember']);
     Route::delete('/boards/{id}', [BoardController::class, 'destroy']);
 

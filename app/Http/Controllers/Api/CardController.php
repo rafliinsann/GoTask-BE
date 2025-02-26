@@ -13,6 +13,7 @@ class CardController extends Controller
     public function index($board_id)
     {
         $board = Board::findOrFail($board_id);
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Cek apakah user adalah member, owner, atau superadmin
@@ -37,8 +38,10 @@ class CardController extends Controller
             'description' => 'nullable|string',
             'label' => 'nullable|string',
             'deadline' => 'nullable|date',
+            'colour' => 'nullable|string'
         ]);
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $board = Board::findOrFail($board_id);
 
@@ -53,6 +56,7 @@ class CardController extends Controller
             'description' => $request->description,
             'label' => $request->label,
             'deadline' => $request->deadline,
+            'colour' => $request->colour,
             'board_id' => $board_id,
         ]);
 
@@ -67,6 +71,7 @@ class CardController extends Controller
     {
         $card = Card::findOrFail($id);
         $board = $card->board;
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Cek role
@@ -80,6 +85,7 @@ class CardController extends Controller
             'description' => 'nullable|string',
             'label' => 'nullable|string',
             'deadline' => 'nullable|date',
+            'colour' => 'nullable|string'
         ]);
 
  
@@ -89,6 +95,7 @@ class CardController extends Controller
             'description' => $request->description,
             'label' => $request->label,
             'deadline' => $request->deadline,
+            'colour' => $request->colour,
         ]);
 
         return response()->json([
@@ -102,6 +109,7 @@ class CardController extends Controller
     {
         $card = Card::findOrFail($id);
         $board = $card->board;
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Hanya owner board atau superadmin yang bisa hapus card

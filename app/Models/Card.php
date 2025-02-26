@@ -17,7 +17,8 @@ class Card extends Model
         'label',
         'deadline',
         'deskripsi',
-	'board_id'
+	    'board_id',
+        'colour'
 ];
 
 
