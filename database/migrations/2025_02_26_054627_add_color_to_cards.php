@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('workspaces', function (Blueprint $table) {
-            $table->id();
-            $table->string('username');
-            $table->string('workspace');
-            $table->json('member');
-            $table->timestamps();
+        Schema::table('cards', function (Blueprint $table) {
+            if (!Schema::hasColumn('cards', 'colour')) {
+                $table->json('colour')->nullable();
+            }
         });
-
     }
 
     /**
@@ -26,6 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tasks');
+        Schema::table('cards', function (Blueprint $table) {
+            //
+        });
     }
 };

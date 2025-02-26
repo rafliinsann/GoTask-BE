@@ -32,6 +32,7 @@ class BoardController extends Controller
             'workspace_id' => 'required|exists:workspaces,id',
         ]);
 
+        /** @var \App\Models\User $user */
         $user = Auth::user();
         $workspace = Workspace::findOrFail($request->workspace_id);
 
@@ -53,6 +54,43 @@ class BoardController extends Controller
         ], 201);
     }
 
+    // update board
+    public function update(Request $request, $id)
+{
+    $request->validate([
+        'nama' => 'sometimes|required|string|max:255',
+        'members' => 'sometimes|array',
+        'members.*' => 'exists:users,id',
+    ]);
+
+    $board = Board::findOrFail($id);
+    $workspace = $board->workspace;
+    /** @var \App\Models\User $user */
+    $user = Auth::user();
+
+    // Hanya owner workspace atau superadmin yang bisa mengupdate
+    if ($workspace->owner_id !== $user->id && !$user->isSuperAdmin()) {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    // Update nama board jika ada
+    if ($request->has('nama')) {
+        $board->nama = $request->nama;
+    }
+
+    // Update member jika ada
+    if ($request->has('members')) {
+        $board->member = json_encode($request->members);
+    }
+
+    $board->save();
+
+    return response()->json([
+        'message' => 'Board berhasil diperbarui!',
+        'board' => $board
+    ], 200);
+}
+
     // Add a new member to the board
     public function addMember(Request $request, $id)
 {
@@ -60,8 +98,10 @@ class BoardController extends Controller
         'username' => 'required|exists:users,username',
     ]);
 
+    
     $board = Board::findOrFail($id);
     $workspace = $board->workspace;
+    /** @var \App\Models\User $user */
     $user = Auth::user();
 
     // Cek apakah user yang login adalah owner workspace atau superadmin
@@ -89,6 +129,7 @@ class BoardController extends Controller
     {
         $board = Board::findOrFail($id);
         $workspace = Workspace::findOrFail($board->workspace_id);
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         // Hanya owner workspace atau superadmin yang bisa menghapus

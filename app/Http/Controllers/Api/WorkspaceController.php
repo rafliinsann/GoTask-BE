@@ -25,6 +25,7 @@ class WorkspaceController extends Controller
     {
         $request->validate([
             'workspace' => 'required|string|max:255',
+            'colour' => 'nullable|string'
         ]);
 
         $user = Auth::user();
@@ -33,6 +34,7 @@ class WorkspaceController extends Controller
             'username' => $user->username, // Menggunakan nama user yang login
             'workspace' => $request->workspace,
             'owner_id' => $user->id, // Mengatur owner_id sesuai user yang login
+            'colour' => $request->colour,
             'member' => json_encode([$user->id]) // Owner langsung menjadi member
         ]);
 
