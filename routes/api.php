@@ -3,6 +3,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Controllers\Api\BoardController;
 use App\Http\Controllers\Api\CardController;
+use App\Http\Controllers\Api\AuthController;
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logout']);
 
 // Group route dengan middleware auth
 Route::middleware('auth:sanctum')->group(function () {
