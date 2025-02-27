@@ -607,6 +607,9 @@ class ComposerStaticInita531b708ad1684ea21c137b933a304fd
     public static $classMap = array (
         'App\\Console\\Commands\\CheckCardDeadlines' => __DIR__ . '/../..' . '/app/Console/Commands/CheckCardDeadlines.php',
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
+        'App\\Events\\BoardUpdated' => __DIR__ . '/../..' . '/app/Events/BoardUpdated.php',
+        'App\\Events\\CardUpdated' => __DIR__ . '/../..' . '/app/Events/CardUpdated.php',
+        'App\\Events\\WorkspaceUpdated' => __DIR__ . '/../..' . '/app/Events/WorkspaceUpdated.php',
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
         'App\\Http\\Controllers\\Api\\AuthController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/AuthController.php',
         'App\\Http\\Controllers\\Api\\BoardController' => __DIR__ . '/../..' . '/app/Http/Controllers/Api/BoardController.php',
