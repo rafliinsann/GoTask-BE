@@ -1,7 +1,6 @@
 <?php
 namespace App\Http\Controllers\Api;
 
-use App\Events\BoardUpdated;
 use App\Http\Controllers\Controller;
 use App\Models\Board;
 use App\Models\Workspace;
@@ -50,7 +49,6 @@ class BoardController extends Controller
             'member' => json_encode([$user->id]), // Default member adalah user yang login
         ]);
 
-        broadcast(new BoardUpdated($board))->toOthers();
 
         return response()->json([
             'message' => 'Board berhasil dibuat!',
@@ -88,7 +86,6 @@ class BoardController extends Controller
     }
 
     $board->save();
-    broadcast(new BoardUpdated($board))->toOthers();
 
     return response()->json([
         'message' => 'Board berhasil diperbarui!',
@@ -123,7 +120,6 @@ class BoardController extends Controller
         $board->save();
     }
 
-    broadcast(new BoardUpdated($board))->toOthers();
 
     return response()->json([
         'message' => 'Member berhasil ditambahkan!',
@@ -145,7 +141,6 @@ class BoardController extends Controller
         }
 
         $board->delete();
-        broadcast(new BoardUpdated($board))->toOthers();
         return response()->json(['message' => 'Board berhasil dihapus!']);
     }
 
