@@ -35,6 +35,7 @@ class CardController extends Controller
     {
         $request->validate([
             'title' => 'required|string|max:255',
+            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'description' => 'nullable|string',
             'label' => 'nullable|string',
             'deadline' => 'nullable|date',
@@ -53,6 +54,7 @@ class CardController extends Controller
 
         $card = Card::create([
             'title' => $request->title,
+            'cover' => $request->cover,
             'description' => $request->description,
             'label' => $request->label,
             'deadline' => $request->deadline,
@@ -83,6 +85,7 @@ class CardController extends Controller
 
         $request->validate([
             'title' => 'required|string|max:255',
+            'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'description' => 'nullable|string',
             'label' => 'nullable|string',
             'deadline' => 'nullable|date',
@@ -93,6 +96,7 @@ class CardController extends Controller
 
         $card->update([
             'title' => $request->title,
+            'cover' => $request->cover,
             'description' => $request->description,
             'label' => $request->label,
             'deadline' => $request->deadline,
