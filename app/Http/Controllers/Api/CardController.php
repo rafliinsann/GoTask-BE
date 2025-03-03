@@ -109,6 +109,43 @@ class CardController extends Controller
         ], 200);
     }
 
+    // Move a card to another board
+public function moveCard(Request $request, $id)
+{
+    $request->validate([
+        'new_board_id' => 'required|exists:boards,id',
+    ]);
+
+    $card = Card::findOrFail($id);
+    $currentBoard = $card->board;
+    $newBoard = Board::findOrFail($request->new_board_id);
+
+    /** @var \App\Models\User $user */
+    $user = Auth::user();
+
+    // Cek apakah user punya akses ke board asal dan tujuan
+    $currentMembers = json_decode($currentBoard->member, true) ?? [];
+    $newMembers = json_decode($newBoard->member, true) ?? [];
+
+    if (
+        (!in_array($user->id, $currentMembers) && $currentBoard->user_id !== $user->id && !$user->isSuperAdmin()) ||
+        (!in_array($user->id, $newMembers) && $newBoard->user_id !== $user->id && !$user->isSuperAdmin())
+    ) {
+        return response()->json(['error' => 'Unauthorized'], 403);
+    }
+
+    // Update board_id pada card
+    $card->update([
+        'board_id' => $newBoard->id,
+    ]);
+
+    return response()->json([
+        'message' => 'Card berhasil dipindahkan!',
+        'card' => $card
+    ], 200);
+}
+
+
     // Delete a card
     public function destroy($id)
     {
