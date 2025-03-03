@@ -1,4 +1,5 @@
 <?php
+use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\WorkspaceController;
 use App\Http\Controllers\Api\BoardController;
@@ -11,6 +12,13 @@ Route::middleware('auth:sanctum')->post('/logout', [AuthController::class, 'logo
 
 // Group route dengan middleware auth
 Route::middleware('auth:sanctum')->group(function () {
+    // User Get All
+    Route::get('/users', [UserController::class, 'index']);
+
+    // Fitur DnD
+    Route::put('/cards/{id}/move', [CardController::class, 'moveCard']);
+
+
     // 🔹 Workspace Routes
     Route::get('/workspaces', [WorkspaceController::class, 'index']);
     Route::post('/workspaces', [WorkspaceController::class, 'store']);

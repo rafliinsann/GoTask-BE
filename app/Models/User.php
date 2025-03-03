@@ -31,7 +31,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'division',
         'class',
         'email',
-        'email',
         'password',
     ];
 
