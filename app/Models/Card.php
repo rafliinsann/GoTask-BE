@@ -24,6 +24,7 @@ class Card extends Model
 
     protected $casts = [
         'label' => 'array',
+        'assign' => 'array',
     ];
 
     public function board()
