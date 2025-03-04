@@ -33,6 +33,7 @@ class WorkspaceController extends Controller
         $workspace = Workspace::create([
             'workspace' => $request->workspace,
             'owner_id' => $user->id, // Owner workspace
+            'username' => $user->username,
             'colour' => $request->colour,
             'member' => json_encode([$user->id]) // Owner langsung jadi member
         ]);

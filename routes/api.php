@@ -22,7 +22,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Fitur DnD
     Route::put('/cards/{id}/move', [CardController::class, 'moveCard']);
 
-
     // Workspace Routes
     Route::get('/workspaces', [WorkspaceController::class, 'index']);
     Route::post('/workspaces', [WorkspaceController::class, 'store']);

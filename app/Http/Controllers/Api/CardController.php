@@ -40,6 +40,8 @@ class CardController extends Controller
             'label' => 'nullable|string',
             'deadline' => 'nullable|date',
             'colour' => 'nullable|string',
+            'assign' => 'nullable|array',
+            'assign.*' => 'exists:users,username'
         ]);
 
         $user = Auth::user();
@@ -59,6 +61,16 @@ class CardController extends Controller
             $coverPath = $file->store('uploads/covers', 'public');
         }
 
+        $allowedUsers = array_merge([$board->user_id], $members); // Owner + Members
+    $assignUsers = [];
+
+    if ($request->assign) {
+        $assignUsers = \App\Models\User::whereIn('username', $request->assign)
+            ->whereIn('id', $allowedUsers)
+            ->pluck('username')
+            ->toArray();
+    }
+
         $card = Card::create([
             'title' => $request->title,
             'cover' => $coverPath, // FIXED BUG
@@ -66,6 +78,7 @@ class CardController extends Controller
             'label' => $request->label,
             'deadline' => $request->deadline,
             'colour' => $request->colour,
+            'assign' => json_encode($assignUsers),
             'board_id' => $board_id,
         ]);
 
@@ -89,12 +102,14 @@ class CardController extends Controller
     }
 
     $request->validate([
-        'title' => 'required|string|max:255',
-        'cover' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'deskripsi' => 'nullable|string',
-        'label' => 'nullable|string',
-        'deadline' => 'nullable|date',
-        'colour' => 'nullable|string'
+        'title' => 'sometimes|string|max:255',
+        'cover' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+        'deskripsi' => 'sometimes|string',
+        'label' => 'sometimes|string',
+        'deadline' => 'sometimes|date',
+        'colour' => 'sometimes|string',
+        'assign' => 'sometimes|array',
+        'assign.*' => 'exists:users,username'
     ]);
 
     // **FIXED**: Inisialisasi `$coverPath` hanya jika ada file yang diunggah
@@ -110,13 +125,26 @@ class CardController extends Controller
         $card->cover = $coverPath;
     }
 
+    // $allowedUsers = array_merge([$board->user_id], $members);
+    // $assignUsers = [];
+
+    // if ($request->assign) {
+    //     $assignUsers = \App\Models\User::whereIn('username', $request->assign)
+    //         ->whereIn('id', $allowedUsers)
+    //         ->pluck('username')
+    //         ->toArray();
+    // }
+
     // **FIXED**: Update hanya data yang dikirim, tanpa mengubah cover jika tidak ada file baru
     $card->update([
-        'title' => $request->title,
-        'deskripsi' => $request->deskripsi,
-        'label' => $request->label,
-        'deadline' => $request->deadline,
-        'colour' => $request->colour,
+        'title' => $request->title ?? $card->title,
+        'deskripsi' => $request->deskripsi ?? $card->deskripsi,
+        'label' => $request->label ?? $card->label,
+        'deadline' => $request->deadline ?? $card->deadline,
+        'colour' => $request->colour ?? $card->colour,
+        $card->update([
+            'assign' => $request->assign,
+        ])
     ]);
 
     return response()->json([
@@ -126,37 +154,41 @@ class CardController extends Controller
 }
 
     // Move a card to another board
-    public function moveCard(Request $request, $id)
-    {
-        $request->validate([
-            'new_board_id' => 'required|exists:boards,id',
-        ]);
+    // Move a card to another board
+public function moveCard(Request $request, $id)
+{
+    $request->validate([
+        'new_board_id' => 'required|exists:boards,id',
+    ]);
 
-        $card = Card::findOrFail($id);
-        $currentBoard = $card->board;
-        $newBoard = Board::findOrFail($request->new_board_id);
-        $user = Auth::user();
+    $card = Card::findOrFail($id);
+    $currentBoard = Board::findOrFail($card->board_id);
+    $newBoard = Board::findOrFail($request->new_board_id);
+    $user = Auth::user();
 
-        // Cek apakah user punya akses ke board asal dan tujuan
-        $currentMembers = json_decode($currentBoard->member, true) ?? [];
-        $newMembers = json_decode($newBoard->member, true) ?? [];
-            /** @var \App\Models\User $user */
-        if (
-            (!in_array($user->id, $currentMembers) && $currentBoard->user_id !== $user->id && !$user->isSuperAdmin()) ||
-            (!in_array($user->id, $newMembers) && $newBoard->user_id !== $user->id && !$user->isSuperAdmin())
-        ) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
+    // Cek apakah user punya akses ke board asal dan tujuan
+    $currentMembers = json_decode($currentBoard->member, true) ?? [];
+    $newMembers = json_decode($newBoard->member, true) ?? [];
 
-        // Update board_id pada card
-        $card->board_id = $newBoard->id;
-        $card->save(); // FIXED BUG
-
-        return response()->json([
-            'message' => 'Card berhasil dipindahkan!',
-            'card' => $card
-        ], 200);
+    /** @var \App\Models\User $user */
+    if (
+        (!in_array($user->id, $currentMembers) && $currentBoard->user_id !== $user->id && !$user->isSuperAdmin()) ||
+        (!in_array($user->id, $newMembers) && $newBoard->user_id !== $user->id && !$user->isSuperAdmin())
+    ) {
+        return response()->json(['error' => 'Unauthorized'], 403);
     }
+
+    // Hapus kartu dari board lama dan pindahkan ke board baru
+    $card->update([
+        'board_id' => $newBoard->id,
+    ]);
+
+    return response()->json([
+        'message' => 'Card berhasil dipindahkan!',
+        'card' => $card
+    ], 200);
+}
+
 
     // Delete a card
     public function destroy($id)
