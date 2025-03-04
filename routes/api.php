@@ -31,15 +31,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/workspaces/{id}/invite', [WorkspaceController::class, 'inviteMember']);
 
     // Board Routes
-    Route::get('/workspaces/{workspace_id}/boards', [BoardController::class, 'index']);
-    Route::post('/workspaces/{workspace_id}/boards', [BoardController::class, 'store']);
+    Route::get('/boards/workspaces/{workspace_id}', [BoardController::class, 'index']);
+    Route::post('/boards/workspaces/{workspace_id}', [BoardController::class, 'store']);
     Route::put('/boards/{id}', [BoardController::class, 'update']);
     Route::post('/boards/{id}/add-member', [BoardController::class, 'addMember']);
     Route::delete('/boards/{id}', [BoardController::class, 'destroy']);
 
     // Card Routes
-    Route::get('/boards/{board_id}/cards', [CardController::class, 'index']);
-    Route::post('/boards/{board_id}/cards', [CardController::class, 'store']);
+    Route::get('/cards/boards/{board_id}', [CardController::class, 'index']);
+    Route::post('/cards/boards/{board_id}', [CardController::class, 'store']);
     Route::put('/cards/{id}', [CardController::class, 'update']);
     Route::delete('/cards/{id}', [CardController::class, 'destroy']);
 });
