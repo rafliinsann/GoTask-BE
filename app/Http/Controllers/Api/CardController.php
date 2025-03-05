@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Board;
 use App\Models\Card;
+use App\Models\Workspace;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -14,11 +15,11 @@ class CardController extends Controller
     public function index($board_id)
     {
         $board = Board::findOrFail($board_id);
+        $workspace = $board->workspace;
         $user = Auth::user();
-            /** @var \App\Models\User $user */
-        // Cek apakah user adalah member, owner, atau superadmin
-        $members = json_decode($board->member, true) ?? [];
-        if (!in_array($user->id, $members) && $board->user_id !== $user->id && !$user->isSuperAdmin()) {
+
+        // Cek apakah user memiliki akses ke workspace
+        if (!$this->hasAccessToWorkspace($workspace, $user->id)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -46,11 +47,10 @@ class CardController extends Controller
 
         $user = Auth::user();
         $board = Board::findOrFail($board_id);
-        /** @var \App\Models\User $user */
+        $workspace = $board->workspace;
 
-        // Cek apakah user adalah member, owner, atau superadmin
-        $members = json_decode($board->member, true) ?? [];
-        if (!in_array($user->id, $members) && $board->user_id !== $user->id && !$user->isSuperAdmin()) {
+        // Cek apakah user memiliki akses ke workspace
+        if (!$this->hasAccessToWorkspace($workspace, $user->id)) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
@@ -61,19 +61,17 @@ class CardController extends Controller
             $coverPath = $file->store('uploads/covers', 'public');
         }
 
-        $allowedUsers = array_merge([$board->user_id], $members); // Owner + Members
-    $assignUsers = [];
+        // Hanya bisa assign ke member workspace
+        $allowedUsers = $workspace->members->pluck('username')->toArray();
+        $assignUsers = [];
 
-    if ($request->assign) {
-        $assignUsers = \App\Models\User::whereIn('username', $request->assign)
-            ->whereIn('id', $allowedUsers)
-            ->pluck('username')
-            ->toArray();
-    }
+        if ($request->assign) {
+            $assignUsers = array_intersect($request->assign, $allowedUsers);
+        }
 
         $card = Card::create([
             'title' => $request->title,
-            'cover' => $coverPath, // FIXED BUG
+            'cover' => $coverPath,
             'deskripsi' => $request->deskripsi,
             'label' => $request->label,
             'deadline' => $request->deadline,
@@ -90,118 +88,95 @@ class CardController extends Controller
 
     // Update a card
     public function update(Request $request, $id)
-{
-    $card = Card::findOrFail($id);
-    $board = $card->board;
-    $user = Auth::user();
-    /** @var \App\Models\User $user */
-    // Cek role
-    $members = json_decode($board->member, true) ?? [];
-    if (!in_array($user->id, $members) && $board->user_id !== $user->id && !$user->isSuperAdmin()) {
-        return response()->json(['error' => 'Unauthorized'], 403);
-    }
+    {
+        $card = Card::findOrFail($id);
+        $board = $card->board;
+        $workspace = $board->workspace;
+        $user = Auth::user();
 
-    $request->validate([
-        'title' => 'sometimes|string|max:255',
-        'cover' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
-        'deskripsi' => 'sometimes|string',
-        'label' => 'sometimes|string',
-        'deadline' => 'sometimes|date',
-        'colour' => 'sometimes|string',
-        'assign' => 'sometimes|array',
-        'assign.*' => 'exists:users,username'
-    ]);
-
-    // **FIXED**: Inisialisasi `$coverPath` hanya jika ada file yang diunggah
-    if ($request->hasFile('cover')) {
-        if ($card->cover && Storage::exists('public/' . $card->cover)) {
-            Storage::delete('public/' . $card->cover);
+        // Cek apakah user memiliki akses ke workspace
+        if (!$this->hasAccessToWorkspace($workspace, $user->id)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-        $file = $request->file('cover');
-        $coverPath = $file->store('uploads/covers', 'public');
+        $request->validate([
+            'title' => 'sometimes|string|max:255',
+            'cover' => 'sometimes|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'deskripsi' => 'sometimes|string',
+            'label' => 'sometimes|string',
+            'deadline' => 'sometimes|date',
+            'colour' => 'sometimes|string',
+            'assign' => 'sometimes|array',
+            'assign.*' => 'exists:users,username'
+        ]);
 
         // Update cover jika ada perubahan
-        $card->cover = $coverPath;
+        if ($request->hasFile('cover')) {
+            if ($card->cover && Storage::exists('public/' . $card->cover)) {
+                Storage::delete('public/' . $card->cover);
+            }
+
+            $file = $request->file('cover');
+            $coverPath = $file->store('uploads/covers', 'public');
+            $card->cover = $coverPath;
+        }
+
+        $card->update($request->only(['title', 'deskripsi', 'label', 'deadline', 'colour']));
+
+        return response()->json([
+            'message' => 'Card berhasil diperbarui!',
+            'card' => $card
+        ], 200);
     }
 
-    // $allowedUsers = array_merge([$board->user_id], $members);
-    // $assignUsers = [];
+    // Move a card to another board
+    public function moveCard(Request $request, $id)
+    {
+        $request->validate([
+            'new_board_id' => 'required|exists:boards,id',
+        ]);
 
-    // if ($request->assign) {
-    //     $assignUsers = \App\Models\User::whereIn('username', $request->assign)
-    //         ->whereIn('id', $allowedUsers)
-    //         ->pluck('username')
-    //         ->toArray();
-    // }
+        $card = Card::findOrFail($id);
+        $newBoard = Board::findOrFail($request->new_board_id);
+        $workspace = $newBoard->workspace;
+        $user = Auth::user();
 
-    // **FIXED**: Update hanya data yang dikirim, tanpa mengubah cover jika tidak ada file baru
-    $card->update([
-        'title' => $request->title ?? $card->title,
-        'deskripsi' => $request->deskripsi ?? $card->deskripsi,
-        'label' => $request->label ?? $card->label,
-        'deadline' => $request->deadline ?? $card->deadline,
-        'colour' => $request->colour ?? $card->colour,
+        // Cek apakah user memiliki akses ke workspace
+        if (!$this->hasAccessToWorkspace($workspace, $user->id)) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Pindahkan card ke board baru
         $card->update([
-            'assign' => $request->assign,
-        ])
-    ]);
+            'board_id' => $newBoard->id,
+        ]);
 
-    return response()->json([
-        'message' => 'Card berhasil diperbarui!',
-        'card' => $card
-    ], 200);
-}
-
-    // Move a card to another board
-    // Move a card to another board
-public function moveCard(Request $request, $id)
-{
-    $request->validate([
-        'new_board_id' => 'required|exists:boards,id',
-    ]);
-
-    $card = Card::findOrFail($id);
-    $currentBoard = Board::findOrFail($card->board_id);
-    $newBoard = Board::findOrFail($request->new_board_id);
-    $user = Auth::user();
-
-    // Cek apakah user punya akses ke board asal dan tujuan
-    $currentMembers = json_decode($currentBoard->member, true) ?? [];
-    $newMembers = json_decode($newBoard->member, true) ?? [];
-
-    /** @var \App\Models\User $user */
-    if (
-        (!in_array($user->id, $currentMembers) && $currentBoard->user_id !== $user->id && !$user->isSuperAdmin()) ||
-        (!in_array($user->id, $newMembers) && $newBoard->user_id !== $user->id && !$user->isSuperAdmin())
-    ) {
-        return response()->json(['error' => 'Unauthorized'], 403);
+        return response()->json([
+            'message' => 'Card berhasil dipindahkan!',
+            'card' => $card
+        ], 200);
     }
-
-    // Hapus kartu dari board lama dan pindahkan ke board baru
-    $card->update([
-        'board_id' => $newBoard->id,
-    ]);
-
-    return response()->json([
-        'message' => 'Card berhasil dipindahkan!',
-        'card' => $card
-    ], 200);
-}
-
 
     // Delete a card
     public function destroy($id)
     {
         $card = Card::findOrFail($id);
         $board = $card->board;
-            $user = Auth::user();
-    /** @var \App\Models\User $user */
-        if ($board->user_id !== $user->id && !$user->isSuperAdmin()) {
+        $workspace = $board->workspace;
+        $user = Auth::user();
+
+        // Hanya owner workspace yang bisa menghapus card
+        if ($workspace->owner_id !== $user->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
         $card->delete();
         return response()->json(['message' => 'Card berhasil dihapus!'], 200);
+    }
+
+    // Helper function: Cek akses ke workspace
+    private function hasAccessToWorkspace($workspace, $userId)
+    {
+        return $workspace->owner_id === $userId || $workspace->members->contains($userId);
     }
 }
