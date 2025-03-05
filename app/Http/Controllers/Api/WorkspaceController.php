@@ -13,12 +13,16 @@ class WorkspaceController extends Controller
     public function index()
     {
         $user = Auth::user();
+
         $workspaces = Workspace::where('owner_id', $user->id)
-            ->orWhereJsonContains('member', $user->id)
+            ->orWhereJsonContains('member', (string) $user->id) // Cek ID dalam bentuk string
+            ->orWhereJsonContains('member', (int) $user->id) // Cek juga ID dalam bentuk integer
             ->get();
 
         return response()->json($workspaces, 200);
     }
+
+
 
     // Create a new workspace
     public function store(Request $request)
@@ -89,31 +93,33 @@ class WorkspaceController extends Controller
 
     // Invite member to workspace
     public function inviteMember(Request $request, $workspace_id)
-    {
-        $workspace = Workspace::findOrFail($workspace_id);
+{
+    $workspace = Workspace::findOrFail($workspace_id);
 
-        if (Auth::id() !== $workspace->owner_id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
-        }
-
-        $request->validate([
-            'username' => 'required|exists:users,username'
-        ]);
-
-        // Cari user berdasarkan username
-        $userToInvite = User::where('username', $request->username)->firstOrFail();
-
-        $members = json_decode($workspace->member, true) ?? [];
-
-        // Tambahkan ID user ke member list jika belum ada
-        if (!in_array($userToInvite->id, $members)) {
-            $members[] = $userToInvite->id;
-            $workspace->member = json_encode($members);
-            $workspace->save();
-        }
-
-        return response()->json(['message' => 'Member berhasil diundang!']);
+    if (Auth::id() !== $workspace->owner_id) {
+        return response()->json(['error' => 'Unauthorized'], 403);
     }
+
+    $request->validate([
+        'username' => 'required|exists:users,username'
+    ]);
+
+    // Cari user berdasarkan username
+    $userToInvite = User::where('username', $request->username)->firstOrFail();
+
+    // Ambil members dengan memastikan selalu dalam format array
+    $members = is_array($workspace->member) ? $workspace->member : json_decode($workspace->member, true) ?? [];
+
+    // Tambahkan ID user ke member list jika belum ada
+    if (!in_array($userToInvite->id, $members)) {
+        $members[] = (int) $userToInvite->id; // Pastikan ID disimpan sebagai integer
+        $workspace->update(['member' => $members]); // Simpan langsung sebagai array
+    }
+
+    return response()->json(['message' => 'Member berhasil diundang!']);
+}
+
+
 
     // Helper function: Check if user is owner
     private function isOwner($workspace)
