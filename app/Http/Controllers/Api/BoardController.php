@@ -100,6 +100,11 @@ class BoardController extends Controller
     // Helper function: Cek akses ke workspace
     private function hasAccessToWorkspace($workspace, $userId)
     {
-        return $workspace->owner_id === $userId || $workspace->members->contains($userId);
+        // Pastikan hanya string yang di-decode, jika sudah array langsung gunakan
+        $members = is_string($workspace->member) ? json_decode($workspace->member, true) ?? [] : $workspace->member;
+
+        return $workspace->owner_id === $userId || in_array($userId, $members);
     }
+
+
 }

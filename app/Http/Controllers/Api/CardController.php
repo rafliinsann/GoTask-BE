@@ -62,11 +62,10 @@ class CardController extends Controller
         }
 
         // Hanya bisa assign ke member workspace
-        $allowedUsers = $workspace->members->pluck('username')->toArray();
+        $allowedUsers = $workspace->member ?? [];
         $assignUsers = [];
-
         if ($request->assign) {
-            $assignUsers = array_intersect($request->assign, $allowedUsers);
+            $assignUsers = array_values(array_intersect($request->assign, $allowedUsers));
         }
 
         $card = Card::create([
@@ -76,9 +75,10 @@ class CardController extends Controller
             'label' => $request->label,
             'deadline' => $request->deadline,
             'colour' => $request->colour,
-            'assign' => json_encode($assignUsers),
+            'assign' => json_encode($assignUsers), // Pastikan tersimpan dalam format JSON
             'board_id' => $board_id,
         ]);
+
 
         return response()->json([
             'message' => 'Card berhasil dibuat!',
@@ -121,7 +121,15 @@ class CardController extends Controller
             $card->cover = $coverPath;
         }
 
-        $card->update($request->only(['title', 'deskripsi', 'label', 'deadline', 'colour']));
+        $updateData = $request->only(['title', 'deskripsi', 'label', 'deadline', 'colour']);
+
+        if ($request->has('assign')) {
+            $allowedUsers = $card->board->workspace->member ?? [];
+            $updateData['assign'] = json_encode(array_values(array_intersect($request->assign, $allowedUsers)));
+        }
+
+        $card->update($updateData);
+
 
         return response()->json([
             'message' => 'Card berhasil diperbarui!',
@@ -177,6 +185,6 @@ class CardController extends Controller
     // Helper function: Cek akses ke workspace
     private function hasAccessToWorkspace($workspace, $userId)
     {
-        return $workspace->owner_id === $userId || $workspace->members->contains($userId);
+        return $workspace->owner_id === $userId || in_array($userId, $workspace->member ?? []);
     }
 }

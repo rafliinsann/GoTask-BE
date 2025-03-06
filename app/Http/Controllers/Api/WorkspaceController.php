@@ -18,6 +18,9 @@ class WorkspaceController extends Controller
             ->orWhereJsonContains('member', (string) $user->id) // Cek ID dalam bentuk string
             ->orWhereJsonContains('member', (int) $user->id) // Cek juga ID dalam bentuk integer
             ->get();
+;
+
+
 
         return response()->json($workspaces, 200);
     }
@@ -39,7 +42,7 @@ class WorkspaceController extends Controller
             'owner_id' => $user->id, // Owner workspace
             'username' => $user->username,
             'colour' => $request->colour,
-            'member' => json_encode([$user->id]) // Owner langsung jadi member
+            'member' => [$user->id] // Owner langsung jadi member
         ]);
 
         return response()->json([
@@ -108,7 +111,8 @@ class WorkspaceController extends Controller
     $userToInvite = User::where('username', $request->username)->firstOrFail();
 
     // Ambil members dengan memastikan selalu dalam format array
-    $members = is_array($workspace->member) ? $workspace->member : json_decode($workspace->member, true) ?? [];
+    $members = $workspace->member ?? [];
+
 
     // Tambahkan ID user ke member list jika belum ada
     if (!in_array($userToInvite->id, $members)) {
@@ -131,7 +135,8 @@ class WorkspaceController extends Controller
     private function hasAccess($workspace)
     {
         $userId = Auth::id();
-        $members = json_decode($workspace->member, true) ?? [];
+        $members = $workspace->member ?? [];
+
         return $workspace->owner_id === $userId || in_array($userId, $members);
     }
 }
